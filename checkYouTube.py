@@ -35,8 +35,7 @@ for i, channel in enumerate(channels):
     channel = channel.rstrip()
     channel = channel.split(',')
     while len(channel)>3:           #there was a , in the title
-        channel[2] += ',' + channel[3]
-        channel = channel[:-1]
+        channel[2] += ',' + channel.pop(3)
     channelUrl = 'https://www.youtube.com/' + channel[1] + '/videos'
     
     #compare this old title with the newest video
