@@ -2,11 +2,16 @@
 ##############################################################################################
 from selenium import webdriver
 from selenium.common import exceptions as seleExceptions
+import os
 
 options = webdriver.firefox.options.Options()
 options.headless = True
 driver = webdriver.Firefox(options=options)
 driver.set_window_size(1000, 1080)
+
+#automatically open channels with new videos in firefox
+openURL = True
+firefoxPath = 'C:\\Program Files\\Mozilla Firefox\\firefox.exe'
 
 def getVidFromChannel(channelUrl):
     driver.get(channelUrl)
@@ -36,10 +41,10 @@ for i, channel in enumerate(channels):
     channel = channel.split(',')
     while len(channel)>3:           #there was a , in the title
         channel[2] += ',' + channel.pop(3)
-    channelUrl = 'https://www.youtube.com/' + channel[1] + '/videos'
+    channelURL = 'https://www.youtube.com/' + channel[1] + '/videos'
     
     #compare this old title with the newest video
-    newestVid = getVidFromChannel(channelUrl)
+    newestVid = getVidFromChannel(channelURL)
     #replace utf characters
     newestVid = newestVid.encode('ascii', errors='ignore') #'replace' would make unicode
     newestVid = newestVid.decode('ascii', errors='ignore') #chars into '?'
@@ -48,7 +53,11 @@ for i, channel in enumerate(channels):
     print(f'{i}', end=' ')
     if not channel[2] == newestVid:
         print(f'\n{channel[0]} has a new video: {newestVid}')
-        print(f'channel url: {channelUrl}')
+        print(f'channel url: {channelURL}')
+        if openURL:
+            os.system(f'""{firefoxPath}" -new-tab "{channelURL}""')
+            #yes, os.system() needs those extra surrounding double quotes to correctly use 
+            #commands which contain a "
         
     #replace each last video with the most current last video  
     channel[2] = newestVid
