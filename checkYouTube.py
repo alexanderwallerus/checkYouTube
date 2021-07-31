@@ -47,10 +47,10 @@ for i, channel in enumerate(channels):
     newestVid = getVidFromChannel(channelURL)
     #replace utf characters
     newestVid = newestVid.encode('ascii', errors='ignore') #'replace' would make unicode
-    newestVid = newestVid.decode('ascii', errors='ignore') #chars into '?'
+    newestVid = newestVid.decode('ascii', errors='ignore').rstrip() #chars into '?'
     if i % 10 == 0 and i != 0:
         print()    
-    print(f'{i}', end=' ')
+    print(f'{i:>2d}', end=' ')          #2 or less digits, ">" = right aligned
     if not channel[2] == newestVid:
         print(f'\n{channel[0]} has a new video: {newestVid}')
         print(f'channel url: {channelURL}')
