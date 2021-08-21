@@ -21,4 +21,4 @@ veritasium,c/veritasium,x
 michael reeves,channel/UCtHaxi4GTYDpJgMSGy7AeSw,x
 ```
 
-Once you run the script it will look at the provided channels and report back if the most recent video title doesn't match what it found the last time it ran.
+Once you run the script it will look at the provided channels and report back if the most recent video doesn't match what it found the last time it ran.
