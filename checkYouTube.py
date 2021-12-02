@@ -33,8 +33,15 @@ def getVidFromChannel(channelUrl):
     
     #get the video's unique hash from the end of its url
     vidHash = vidTitle.get_attribute('href')
-    vidHash = vidHash.split('v=')[1]
-    
+    if 'v=' in vidHash:
+        vidHash = vidHash.split('v=')[1]
+    elif 'shorts' in vidHash:
+        #the page links the last video not as a "/watch?v=hash" but as 
+        #https://www.youtube.com/shorts/hash => can still access the vid as "/watch?v=hash"
+        vidHash = vidHash.split('/')[-1]
+    else:
+        print(f'new type of video found: {vidHash}')
+        exit()
     return vidTitle.text, vidHash
 
 with open('channels.csv') as f:
