@@ -2,7 +2,12 @@
 ##############################################################################################
 from selenium import webdriver
 from selenium.common import exceptions as seleExceptions
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.common.by import By
+
 import os
+import time
 
 options = webdriver.firefox.options.Options()
 options.headless = True
@@ -14,35 +19,55 @@ openURL = True
 firefoxPath = 'C:\\Program Files\\Mozilla Firefox\\firefox.exe'
 
 def getVidFromChannel(channelUrl):
-    driver.get(channelUrl)
-    
-    #check if I have to agree to a cookie banner
-    ariaLabel = 'Agree to the use of cookies and other data for the purposes described'
-    xPath = f'//button[@aria-label="{ariaLabel}"]'
     try:
-        agree = driver.find_element_by_xpath(xPath)
-        print('cookie banner in the way, clicking it')
-        agree.click()
+        driver.get(channelUrl)
+        while True:
+            loaded = driver.execute_script('return document.readyState')
+            if(loaded == 'complete'):
+                break
+            else:
+                time.sleep(0.2)
+        
+        #check if I have to agree to a cookie banner
+        try:
+            ariaLabel = 'Agree to the use of cookies and other data for the purposes described'
+            xPath = f'//button[@aria-label="{ariaLabel}"]'
+            agree = driver.find_element(by=By.XPATH, value=xPath)
+            print('cookie banner in the way, clicking it')
+            agree.click()
+        except seleExceptions.NoSuchElementException:
+            try:
+                xPath = f'//button[@aria-label="Accept all"]'
+                agree = driver.find_element(by=By.XPATH, value=xPath)
+                print('cookie banner in the way, clicking it')
+                agree.click()
+            except seleExceptions.NoSuchElementException:
+                #print('no cookie banner in the way')
+                pass
+        
+        finally:
+            firstVidxPath = '//div[@class="style-scope ytd-grid-video-renderer"]'
+            firstVidDiv = WebDriverWait(driver, 30).until(
+                ec.presence_of_element_located( (By.XPATH, firstVidxPath) ))
+            vidTitle = firstVidDiv.find_element(by=By.XPATH, value='.//a[@id="video-title"]')
+            
+            #get the video's unique hash from the end of its url
+            vidHash = vidTitle.get_attribute('href')
+            if 'v=' in vidHash:
+                vidHash = vidHash.split('v=')[1]
+            elif 'shorts' in vidHash:
+                #the page links the last video not as a "/watch?v=hash" but as
+                #https://www.youtube.com/shorts/hash => can still access the vid as "/watch?v=hash"
+                vidHash = vidHash.split('/')[-1]
+            else:
+                print(f'new type of video found: {vidHash}')
+                exit()
+            return vidTitle.text, vidHash
+    
     except seleExceptions.NoSuchElementException:
-        #print('no cookie banner in the way')
-        pass
-    
-    firstVidxPath = '//div[@class="style-scope ytd-grid-video-renderer"]'
-    firstVidDiv = driver.find_element_by_xpath(firstVidxPath)
-    vidTitle = firstVidDiv.find_element_by_xpath('.//a[@id="video-title"]')
-    
-    #get the video's unique hash from the end of its url
-    vidHash = vidTitle.get_attribute('href')
-    if 'v=' in vidHash:
-        vidHash = vidHash.split('v=')[1]
-    elif 'shorts' in vidHash:
-        #the page links the last video not as a "/watch?v=hash" but as 
-        #https://www.youtube.com/shorts/hash => can still access the vid as "/watch?v=hash"
-        vidHash = vidHash.split('/')[-1]
-    else:
-        print(f'new type of video found: {vidHash}')
-        exit()
-    return vidTitle.text, vidHash
+        print('no such element')
+        #quit driver upon error
+        driver.quit()
 
 with open('channels.csv') as f:
     channels = f.readlines()
