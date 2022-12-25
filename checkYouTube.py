@@ -44,25 +44,32 @@ def getVidFromChannel(channelUrl):
             except seleExceptions.NoSuchElementException:
                 #print('no cookie banner in the way')
                 pass
-        
         finally:
-            firstVidxPath = '//div[@class="style-scope ytd-grid-video-renderer"]'
-            firstVidDiv = WebDriverWait(driver, 30).until(
+            vidTitle = None
+            try:
+                firstVidxPath = '//div[@class="style-scope ytd-rich-item-renderer"]'
+                firstVidDiv = WebDriverWait(driver, 8).until(
                 ec.presence_of_element_located( (By.XPATH, firstVidxPath) ))
-            vidTitle = firstVidDiv.find_element(by=By.XPATH, value='.//a[@id="video-title"]')
-            
-            #get the video's unique hash from the end of its url
-            vidHash = vidTitle.get_attribute('href')
-            if 'v=' in vidHash:
-                vidHash = vidHash.split('v=')[1]
-            elif 'shorts' in vidHash:
-                #the page links the last video not as a "/watch?v=hash" but as
-                #https://www.youtube.com/shorts/hash => can still access the vid as "/watch?v=hash"
-                vidHash = vidHash.split('/')[-1]
-            else:
-                print(f'new type of video found: {vidHash}')
-                exit()
-            return vidTitle.text, vidHash
+                vidTitle = firstVidDiv.find_element(by=By.XPATH, value='.//a[@id="video-title-link"]')
+            except seleExceptions.TimeoutException as ex:
+                print("youtube's older grid renderer got loaded")
+                firstVidxPath = '//div[@class="style-scope ytd-grid-video-renderer"]'
+                firstVidDiv = WebDriverWait(driver, 8).until(
+                    ec.presence_of_element_located( (By.XPATH, firstVidxPath) ))
+                vidTitle = firstVidDiv.find_element(by=By.XPATH, value='.//a[@id="video-title"]')
+            finally:
+                #get the video's unique hash from the end of its url
+                vidHash = vidTitle.get_attribute('href')
+                if 'v=' in vidHash:
+                    vidHash = vidHash.split('v=')[1]
+                elif 'shorts' in vidHash:
+                    #the page links the last video not as a "/watch?v=hash" but as
+                    #https://www.youtube.com/shorts/hash => can still access the vid as "/watch?v=hash"
+                    vidHash = vidHash.split('/')[-1]
+                else:
+                    print(f'new type of video found: {vidHash}')
+                    exit()
+                return vidTitle.text, vidHash
     
     except seleExceptions.NoSuchElementException:
         print('no such element')
